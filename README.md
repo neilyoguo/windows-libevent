@@ -24,5 +24,13 @@ event_core.dll
 event_extra.dll
 ```
 ## 使用libevent库 
-tcp实战 见[testlibevent](https://github.com/neilyoguo/windows-libevent/tree/main/testlibevent)
+### tcp实战
+ [testlibevent](https://github.com/neilyoguo/windows-libevent/tree/main/testlibevent)
+
+### http实战 
+sever使用libevent库
+[httplibevent](https://github.com/neilyoguo/windows-libevent/tree/main/httplibevent)
+
+client使用libcurl库
+[libcurl](https://github.com/neilyoguo/windows-libevent/tree/main/uselibcurl)
 
