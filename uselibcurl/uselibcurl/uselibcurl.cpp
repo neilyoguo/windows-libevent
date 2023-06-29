@@ -8,14 +8,17 @@
 #include <stdio.h>
 #include <map>
 
-#define URL "127.0.0.1:80"
-//define URL "127.0.0.1:80/jpg"
+
+
+#define URL "127.0.0.1:1234"
+//#define URL "123.56.140.137:80/jpg"
 
 //头部信息键值对
 std::map<std::string, std::string> mHead;
 
 
 int offset = 0;
+
 
 std::string find_header(const std::string &str)
 {
@@ -61,6 +64,8 @@ size_t WriteHeadCallback(char *ptr, size_t size, size_t nmemb, void *userdata)
 	size_t length = size * nmemb;
 	pBuffer.append((char*)ptr, length);
 	int pos = pBuffer.find(": ");
+
+
 	key = pBuffer.substr(0, pos);
 	if (pos == -1)
 	{
@@ -76,66 +81,75 @@ size_t WriteHeadCallback(char *ptr, size_t size, size_t nmemb, void *userdata)
 }
 int main()
 {
-	//初始化Curl：
-	curl_global_init(CURL_GLOBAL_ALL);
-
-	// 构建一个Curl对象：
-
-	CURL * curl = curl_easy_init();
-	if (!curl)
+	while (1)
 	{
-		std::cout << "intit fail!" << std::endl;
+		//初始化Curl：
+		curl_global_init(CURL_GLOBAL_ALL);
+
+		// 构建一个Curl对象：
+
+		CURL * curl = curl_easy_init();
+		if (!curl)
+		{
+			std::cout << "intit fail!" << std::endl;
+		}
+
+		// 设置请求URL：
+		curl_easy_setopt(curl, CURLOPT_URL, URL);
+
+		//设置请求方式post：
+		curl_easy_setopt(curl, CURLOPT_POST, 1L); // POST请求
+
+		//设置请求头：
+
+		struct curl_slist *headers = NULL;
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		//设置json数据
+		Json::Value val;
+		val["name"] = "neilyo";
+		//将json转string
+		Json::FastWriter fast_writer;
+		std::string str = fast_writer.write(val);
+		//设置传输的字符串
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, str.length());
+
+		//设置响应正文回调函数
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+
+		FILE *fp;
+		fopen_s(&fp, "data.jpg", "ab+");
+		if (fp != nullptr)
+		{
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+		}
+
+		//设置相应头回调函数
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeadCallback);
+		curl_easy_setopt(curl, CURLOPT_HEADERDATA, nullptr);
+
+
+
+		CURLcode ret = curl_easy_perform(curl);
+
+		if (CURLE_OK != ret)
+		{
+			std::cout << "send fail msg is:" << curl_easy_strerror(ret) << std::endl;
+		}
+		else
+		{
+			std::cout << "send ok " << std::endl;
+		}
+
+		curl_easy_cleanup(curl);
+		curl_slist_free_all(headers);
+		fclose(fp);
+		getchar();
 	}
-
-	// 设置请求URL：
-	curl_easy_setopt(curl, CURLOPT_URL, URL);
-
-	//设置请求方式post：
-	curl_easy_setopt(curl, CURLOPT_POST, 1L); // POST请求
-
-	//设置请求头：
-
-	struct curl_slist *headers = NULL;
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-	//设置json数据
-	Json::Value val;
-	val["name"] = "neilyo";
-	//将json转string
-	Json::FastWriter fast_writer;
-	std::string str = fast_writer.write(val);
-	//设置传输的字符串
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str.c_str());
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, str.length());
-
-	//设置响应正文回调函数
-	FILE *fp;
-	fopen_s(&fp, "data.jpg", "ab+");
-	fseek(fp, 0, SEEK_SET);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-	//设置相应头回调函数
-	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeadCallback);
-	curl_easy_setopt(curl, CURLOPT_HEADERDATA, nullptr);
-
-
-
-	CURLcode ret = curl_easy_perform(curl);
-
-	if (CURLE_OK != ret)
-	{
-		std::cout << "send fail msg is:" << curl_easy_strerror(ret) <<std::endl;
-	}
-	else
-	{
-		std::cout << "send ok " << std::endl;
-	}
-
-	curl_easy_cleanup(curl);
-	curl_slist_free_all(headers);
-	fclose(fp);
-	getchar();
+	
 
 }
 

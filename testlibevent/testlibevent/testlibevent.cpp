@@ -13,7 +13,7 @@ void read_cb(struct bufferevent *bev, void *ctx)
 	//读区缓冲区数据，直到读完为止
 	while (evbuffer_get_length(input))
 	{
-		char buf[4] = { 0 };
+		char buf[256] = { 0 };
 		int ret = bufferevent_read(bev, buf, sizeof(buf));
 		if (ret < 0)
 		{
@@ -77,7 +77,12 @@ int main()
 	server_addr.sin_port = htons(8000);
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	struct event_base *base = event_base_new();
+	//设置iocp
+	struct event_config *cfg = event_config_new();
+	event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
+	event_base *base = event_base_new_with_config(cfg);
+
+
 	struct evconnlistener *listener = evconnlistener_new_bind(base, listener_cb, (void *)base,
 		LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
 		(struct sockaddr*)&server_addr,

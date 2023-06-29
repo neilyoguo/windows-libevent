@@ -127,14 +127,20 @@ int main()
 {
 	WSADATA wsa_data;
 	WSAStartup(MAKEWORD(2, 2), &wsa_data);
+	//使用iocp
+	struct event_config *cfg = event_config_new();
+	event_config_set_flag(cfg, EVENT_BASE_FLAG_STARTUP_IOCP);
+
+
 	//初始化事件集合
-	struct event_base *base = event_init();
+	//struct event_base *base = event_init();
+	struct event_base *base = event_base_new_with_config(cfg);
 	//http 服务器
    //1. 创建evhttp上下文
 	evhttp* evh = evhttp_new(base);
 
 	//2. 绑定端口与ip
-	if (evhttp_bind_socket(evh, "127.0.0.1", 80) != 0) {
+	if (evhttp_bind_socket(evh, "127.0.0.1", 1234) != 0) {
 		std::cout << "evhttp_bind_socket failed!" << std::endl;
 	}
 
